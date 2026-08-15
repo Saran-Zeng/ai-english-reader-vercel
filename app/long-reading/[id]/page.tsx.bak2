@@ -1,0 +1,290 @@
+"use client";
+
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { getArticle } from "@/lib/articles";
+
+type Props = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+export default function LongReadingDetailPage({ params }: Props) {
+  const [articleId, setArticleId] = useState<string | null>(null);
+
+  useMemo(() => {
+    params.then((value) => {
+      setArticleId(value.id);
+    });
+  }, [params]);
+
+  if (!articleId) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="text-slate-500">正在加载文章...</div>
+      </main>
+    );
+  }
+
+  const article = getArticle(articleId);
+
+  if (!article) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-6">
+        <h1 className="text-3xl font-bold text-slate-900">文章不存在</h1>
+
+        <Link
+          href="/long-reading"
+          className="mt-6 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white"
+        >
+          返回文章列表
+        </Link>
+      </main>
+    );
+  }
+
+  return <ReadingInterface article={article} />;
+}
+
+function ReadingInterface({
+  article,
+}: {
+  article: NonNullable<ReturnType<typeof getArticle>>;
+}) {
+  const [showChinese, setShowChinese] = useState(true);
+  const [playing, setPlaying] = useState(false);
+  const [currentParagraph, setCurrentParagraph] = useState<number | null>(
+    null,
+  );
+
+  const stopSpeaking = () => {
+    if (typeof window !== "undefined") {
+      window.speechSynthesis.cancel();
+    }
+
+    setPlaying(false);
+    setCurrentParagraph(null);
+  };
+
+  const speakParagraph = (index: number) => {
+    if (typeof window === "undefined") return;
+
+    window.speechSynthesis.cancel();
+
+    const paragraph = article.paragraphs[index];
+
+    const utterance = new SpeechSynthesisUtterance(paragraph.english);
+
+    utterance.lang = "en-US";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+
+    utterance.onstart = () => {
+      setPlaying(true);
+      setCurrentParagraph(index);
+    };
+
+    utterance.onend = () => {
+      setPlaying(false);
+      setCurrentParagraph(null);
+    };
+
+    utterance.onerror = () => {
+      setPlaying(false);
+      setCurrentParagraph(null);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const speakAll = () => {
+    if (typeof window === "undefined") return;
+
+    window.speechSynthesis.cancel();
+
+    const text = article.paragraphs
+      .map((paragraph) => paragraph.english)
+      .join("\n\n");
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    utterance.lang = "en-US";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+
+    utterance.onstart = () => {
+      setPlaying(true);
+      setCurrentParagraph(0);
+    };
+
+    utterance.onend = () => {
+      setPlaying(false);
+      setCurrentParagraph(null);
+    };
+
+    utterance.onerror = () => {
+      setPlaying(false);
+      setCurrentParagraph(null);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const wordCount = article.paragraphs.reduce(
+    (total, paragraph) =>
+      total + paragraph.english.trim().split(/\s+/).length,
+    0,
+  );
+
+  return (
+    <main className="min-h-screen bg-slate-50">
+      <header className="sticky top-0 z-30 border-b bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <Link
+            href="/long-reading"
+            className="font-semibold text-slate-700 hover:text-blue-600"
+          >
+            ← 长篇阅读
+          </Link>
+
+          <Link
+            href="/"
+            className="font-bold text-slate-900"
+          >
+            AI English Reader
+          </Link>
+
+          <Link
+            href="/reader"
+            className="font-semibold text-blue-600"
+          >
+            AI 阅读
+          </Link>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-4xl px-6 py-12">
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm md:p-12">
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+              {article.level}
+            </span>
+
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+              {article.category}
+            </span>
+
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+              {article.paragraphs.length} 段
+            </span>
+
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+              约 {wordCount} 词
+            </span>
+          </div>
+
+          <h1 className="mt-6 text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
+            {article.title}
+          </h1>
+
+          <p className="mt-4 text-xl text-slate-500">
+            {article.subtitle}
+          </p>
+
+          <div className="mt-10 flex flex-wrap gap-3 border-t pt-8">
+            <button
+              onClick={speakAll}
+              className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
+            >
+              🔊 全文朗读
+            </button>
+
+            <button
+              onClick={stopSpeaking}
+              disabled={!playing}
+              className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              ⏹ 停止朗读
+            </button>
+
+            <button
+              onClick={() => setShowChinese((value) => !value)}
+              className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              {showChinese ? "🙈 隐藏全部中文" : "👀 显示全部中文"}
+            </button>
+          </div>
+
+          {playing && (
+            <div className="mt-5 rounded-xl bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
+              🔊 正在朗读
+              {currentParagraph !== null
+                ? ` · 第 ${currentParagraph + 1} 段`
+                : ""}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-8 space-y-5">
+          {article.paragraphs.map((paragraph, index) => {
+            const active = currentParagraph === index;
+
+            return (
+              <article
+                key={paragraph.id}
+                className={`rounded-2xl border bg-white p-6 shadow-sm transition md:p-8 ${
+                  active
+                    ? "border-blue-400 ring-2 ring-blue-100"
+                    : "border-slate-200"
+                }`}
+              >
+                <div className="mb-5 flex items-center justify-between">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-500">
+                    {index + 1}
+                  </span>
+
+                  <button
+                    onClick={() => speakParagraph(index)}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    🔊 朗读本段
+                  </button>
+                </div>
+
+                <p className="text-xl font-medium leading-9 text-slate-900">
+                  {paragraph.english}
+                </p>
+
+                <div className="my-6 border-t border-dashed border-slate-200" />
+
+                {showChinese ? (
+                  <p className="text-base leading-8 text-slate-600">
+                    {paragraph.chinese}
+                  </p>
+                ) : (
+                  <div className="rounded-xl bg-slate-50 px-4 py-4 text-sm text-slate-400">
+                    中文已隐藏
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 text-center">
+          <p className="text-sm text-slate-500">
+            已完成文章阅读
+          </p>
+
+          <Link
+            href="/long-reading"
+            className="mt-4 inline-block rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white hover:bg-slate-800"
+          >
+            阅读其他文章
+          </Link>
+        </div>
+      </section>
+    </main>
+  );
+}

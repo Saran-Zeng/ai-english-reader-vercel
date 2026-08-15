@@ -1,0 +1,249 @@
+import Link from "next/link";
+
+export default function HomePage() {
+  return (
+    <main className="min-h-screen bg-[#f7f8fc] text-slate-900">
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
+          <Link
+            href="/"
+            className="flex items-center gap-3"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-lg text-white shadow-sm">
+              📖
+            </div>
+
+            <div>
+              <div className="text-sm font-black tracking-tight text-slate-900">
+                AI English Reader
+              </div>
+              <div className="text-[10px] font-medium text-slate-400">
+                英语阅读学习助手
+              </div>
+            </div>
+          </Link>
+
+          <nav className="hidden items-center gap-1 md:flex">
+            <Link
+              href="/reader"
+              className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-indigo-50 hover:text-indigo-600"
+            >
+              🤖 AI 阅读
+            </Link>
+
+            <Link
+              href="/long-reading"
+              className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-indigo-50 hover:text-indigo-600"
+            >
+              📚 长篇阅读
+            </Link>
+
+            <Link
+              href="/notes"
+              className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-indigo-50 hover:text-indigo-600"
+            >
+              📝 笔记本
+            </Link>
+
+            <Link
+              href="/profile"
+              className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-indigo-50 hover:text-indigo-600"
+            >
+              👤 我的
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="mx-auto max-w-6xl px-5 pb-8 pt-14 md:pb-12 md:pt-20">
+        <div className="max-w-3xl">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-600">
+            ✨ AI-powered English Reading
+          </div>
+
+          <h1 className="text-4xl font-black leading-tight tracking-tight md:text-6xl">
+            让英文阅读
+            <br />
+            <span className="text-indigo-600">
+              真正变得简单。
+            </span>
+          </h1>
+
+          <p className="mt-6 max-w-2xl text-base leading-8 text-slate-500 md:text-lg">
+            输入英文文章，AI 帮你理解内容、分析句子、
+            点读单词，并通过自然朗读提升英语阅读能力。
+          </p>
+        </div>
+      </section>
+
+      {/* Main Features */}
+      <section className="mx-auto max-w-6xl px-5 pb-16">
+        <div className="grid gap-5 md:grid-cols-3">
+          {/* AI Reader */}
+          <Link
+            href="/reader"
+            className="group rounded-3xl border border-indigo-100 bg-white p-7 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-xl"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-2xl">
+              🤖
+            </div>
+
+            <h2 className="mt-6 text-xl font-black">
+              AI 阅读
+            </h2>
+
+            <p className="mt-3 text-sm leading-7 text-slate-500">
+              输入任何英文文章，AI 自动分析内容、
+              句子、单词和中文理解。
+            </p>
+
+            <div className="mt-7 text-sm font-bold text-indigo-600">
+              开始阅读 →
+            </div>
+          </Link>
+
+          {/* Long Reading */}
+          <Link
+            href="/long-reading"
+            className="group rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-xl"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-2xl">
+              📚
+            </div>
+
+            <h2 className="mt-6 text-xl font-black">
+              长篇阅读
+            </h2>
+
+            <p className="mt-3 text-sm leading-7 text-slate-500">
+              阅读完整英文文章，支持原声音频、
+              AI 朗读、中英文对照和分段阅读。
+            </p>
+
+            <div className="mt-7 text-sm font-bold text-indigo-600">
+              浏览文章 →
+            </div>
+          </Link>
+
+          {/* Notes */}
+          <Link
+            href="/notes"
+            className="group rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-xl"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-2xl">
+              📝
+            </div>
+
+            <h2 className="mt-6 text-xl font-black">
+              我的笔记本
+            </h2>
+
+            <p className="mt-3 text-sm leading-7 text-slate-500">
+              保存阅读过程中遇到的单词、
+              文章和重要学习内容。
+            </p>
+
+            <div className="mt-7 text-sm font-bold text-indigo-600">
+              打开笔记本 →
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      {/* Reading Flow */}
+      <section className="border-y border-slate-200 bg-white">
+        <div className="mx-auto max-w-6xl px-5 py-14">
+          <div className="mb-10 text-center">
+            <div className="text-xs font-black tracking-[0.2em] text-indigo-500">
+              SIMPLE READING FLOW
+            </div>
+
+            <h2 className="mt-3 text-2xl font-black md:text-3xl">
+              三步开始你的英语阅读
+            </h2>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-3">
+            <Step
+              number="01"
+              title="选择文章"
+              description="输入自己的文章，或者从长篇阅读中选择一篇文章。"
+            />
+
+            <Step
+              number="02"
+              title="理解文章"
+              description="AI 帮你分析句子、单词、中文翻译和文章内容。"
+            />
+
+            <Step
+              number="03"
+              title="听与读"
+              description="使用文章原声或 AI 朗读，边听边读，逐步提高英语能力。"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="mx-auto max-w-6xl px-5 py-8">
+        <div className="flex flex-col gap-3 text-xs text-slate-400 md:flex-row md:items-center md:justify-between">
+          <span>
+            © 2026 AI English Reader
+          </span>
+
+          <div className="flex gap-4">
+            <Link
+              href="/reader"
+              className="hover:text-indigo-600"
+            >
+              AI 阅读
+            </Link>
+
+            <Link
+              href="/long-reading"
+              className="hover:text-indigo-600"
+            >
+              长篇阅读
+            </Link>
+
+            <Link
+              href="/notes"
+              className="hover:text-indigo-600"
+            >
+              笔记本
+            </Link>
+          </div>
+        </div>
+      </footer>
+    </main>
+  );
+}
+
+function Step({
+  number,
+  title,
+  description,
+}: {
+  number: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="text-center">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white">
+        {number}
+      </div>
+
+      <h3 className="mt-5 text-base font-black">
+        {title}
+      </h3>
+
+      <p className="mx-auto mt-2 max-w-xs text-sm leading-7 text-slate-500">
+        {description}
+      </p>
+    </div>
+  );
+}

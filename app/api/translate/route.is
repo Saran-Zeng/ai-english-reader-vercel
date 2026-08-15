@@ -1,0 +1,35 @@
+import { NextRequest } from "next/server";
+
+import { translateText } from "@/lib/ai/analyzer";
+import {
+  errorResponse,
+  successResponse,
+} from "@/lib/utils/response";
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    const text =
+      typeof body?.text === "string"
+        ? body.text.trim()
+        : "";
+
+    if (!text) {
+      return errorResponse("请输入需要翻译的内容。");
+    }
+
+    const result = await translateText(text);
+
+    return successResponse(result);
+  } catch (error) {
+    console.error("Translation error:", error);
+
+    return errorResponse(
+      error instanceof Error
+        ? error.message
+        : "翻译失败，请稍后重试。",
+      500
+    );
+  }
+}

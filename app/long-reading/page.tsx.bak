@@ -1,0 +1,126 @@
+import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+
+export default async function LongReadingPage() {
+  const articles = await prisma.article.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+    include: {
+      sentences: {
+        orderBy: {
+          order: "asc",
+        },
+        include: {
+          words: true,
+        },
+      },
+      vocabulary: true,
+      grammar: true,
+    },
+  });
+
+  return (
+    <main className="long-reading-page">
+      {/* Hero */}
+      <section className="long-reading-hero">
+        <div className="long-reading-badge">
+          📚 LONG FORM READING
+        </div>
+
+        <h1>长篇阅读</h1>
+
+        <p>
+          阅读完整英文文章，支持分段朗读、中英文对照，
+          <br />
+          让英语阅读从短篇练习走向真正的文章阅读。
+        </p>
+      </section>
+
+      {/* Content */}
+      <section className="long-reading-content">
+        {articles.length === 0 ? (
+          <div className="empty-reading">
+            <div className="empty-icon">📚</div>
+
+            <h2>暂时还没有文章</h2>
+
+            <p>
+              你可以先进入 AI 阅读，分析一篇英文文章。
+            </p>
+
+            <Link href="/reader" className="empty-button">
+              🤖 开始 AI 阅读
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="reading-list-header">
+              <div>
+                <h2>文章库</h2>
+
+                <p>
+                  共 {articles.length} 篇文章
+                </p>
+              </div>
+            </div>
+
+            <div className="long-reading-grid">
+              {articles.map((article) => {
+                const wordCount = article.content
+                  .trim()
+                  .split(/\s+/)
+                  .filter(Boolean).length;
+
+                return (
+                  <Link
+                    key={article.id}
+                    href={`/long-reading/${article.id}`}
+                    className="long-reading-card"
+                  >
+                    <div className="article-card-top">
+                      <div className="article-card-icon">
+                        📖
+                      </div>
+
+                      {article.level && (
+                        <span className="article-level">
+                          {article.level}
+                        </span>
+                      )}
+                    </div>
+
+                    <h3>{article.title}</h3>
+
+                    <p className="article-summary">
+                      {article.summary ||
+                        "开始阅读这篇英文文章，理解文章内容，学习词汇和句子。"}
+                    </p>
+
+                    <div className="article-meta">
+                      <span>
+                        {article.sentences.length} 段
+                      </span>
+
+                      <span>·</span>
+
+                      <span>
+                        {wordCount} 词
+                      </span>
+                    </div>
+
+                    <div className="article-card-action">
+                      <span>开始阅读</span>
+
+                      <span>→</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </section>
+    </main>
+  );
+}

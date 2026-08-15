@@ -1,0 +1,58 @@
+import { NextRequest } from "next/server";
+
+import { generateSpeech } from "@/lib/audio/tts";
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    const text =
+      typeof body?.text === "string"
+        ? body.text.trim()
+        : "";
+
+    if (!text) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "请输入需要朗读的文本。",
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const audio = await generateSpeech(text);
+
+    return new Response(audio, {
+      status: 200,
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Content-Disposition": "inline",
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (error) {
+    console.error("Audio generation error:", error);
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "语音生成失败。",
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  }
+}

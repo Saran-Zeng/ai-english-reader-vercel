@@ -1,0 +1,100 @@
+import Link from "next/link";
+
+export default function HomePage() {
+  return (
+    <main className="min-h-screen bg-slate-50">
+      <header className="border-b bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+          <Link href="/" className="text-2xl font-bold text-slate-900">
+            AI English Reader
+          </Link>
+
+          <nav className="flex gap-6 text-sm font-medium">
+            <Link href="/reader" className="text-slate-600 hover:text-blue-600">
+              AI 阅读
+            </Link>
+            <Link
+              href="/long-reading"
+              className="text-slate-600 hover:text-blue-600"
+            >
+              长篇阅读
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-6xl px-6 py-20">
+        <div className="max-w-3xl">
+          <div className="mb-5 inline-flex rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700">
+            AI English Reader
+          </div>
+
+          <h1 className="text-5xl font-bold leading-tight tracking-tight text-slate-900">
+            用 AI 阅读英文，
+            <br />
+            真正把文章读懂。
+          </h1>
+
+          <p className="mt-6 text-lg leading-8 text-slate-600">
+            从短篇文章分析，到长篇英文阅读、逐段翻译、单词点读和全文朗读，
+            一个页面完成完整的英语阅读训练。
+          </p>
+
+          <div className="mt-10 flex gap-4">
+            <Link
+              href="/reader"
+              className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
+            >
+              开始 AI 阅读
+            </Link>
+
+            <Link
+              href="/long-reading"
+              className="rounded-xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              长篇阅读
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-16 grid gap-6 md:grid-cols-3">
+          <Feature
+            icon="🤖"
+            title="AI 阅读分析"
+            description="输入英文文章，快速分析重点单词、句子和语法。"
+          />
+
+          <Feature
+            icon="📖"
+            title="长篇阅读"
+            description="完整文章阅读，中英逐段对照，并支持隐藏中文。"
+          />
+
+          <Feature
+            icon="🔊"
+            title="智能朗读"
+            description="全文朗读、分段朗读，并自动高亮当前阅读段落。"
+          />
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function Feature({
+  icon,
+  title,
+  description,
+}: {
+  icon: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="text-3xl">{icon}</div>
+      <h2 className="mt-5 text-xl font-bold text-slate-900">{title}</h2>
+      <p className="mt-3 leading-7 text-slate-600">{description}</p>
+    </div>
+  );
+}
