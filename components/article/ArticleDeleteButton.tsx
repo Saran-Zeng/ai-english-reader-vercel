@@ -1,63 +1,39 @@
-```tsx
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { MouseEvent } from "react";
 
-type ArticleDeleteButtonProps = {
+type Props = {
   articleId: string;
-  articleTitle: string;
 };
 
-export default function ArticleDeleteButton({
-  articleId,
-  articleTitle,
-}: ArticleDeleteButtonProps) {
+export default function ArticleDeleteButton({ articleId }: Props) {
   const router = useRouter();
-  const [deleting, setDeleting] = useState(false);
 
-  async function handleDelete(event: MouseEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    event.stopPropagation();
+  async function handleDelete() {
+    const ok = confirm("确定删除这篇文章吗？");
 
-    const confirmed = window.confirm(
-      `确定要删除《${articleTitle}》吗？\n\n删除后将无法恢复。`
-    );
+    if (!ok) return;
 
-    if (!confirmed) {
-      return;
-    }
+    await fetch(`/api/articles/${articleId}`, {
+      method: "DELETE",
+    });
 
-    setDeleting(true);
-
-    try {
-      const response = await fetch(`/api/articles/${articleId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("删除失败");
-      }
-
-      router.refresh();
-    } catch (error) {
-      console.error(error);
-      window.alert("删除失败，请稍后再试。");
-      setDeleting(false);
-    }
+    router.refresh();
   }
 
   return (
     <button
-      type="button"
       onClick={handleDelete}
-      disabled={deleting}
-      className="article-delete-button"
-      title="删除文章"
+      style={{
+        padding: "8px 14px",
+        borderRadius: "8px",
+        border: "none",
+        cursor: "pointer",
+        background: "#ef4444",
+        color: "white",
+      }}
     >
-      {deleting ? "删除中..." : "🗑 删除"}
+      删除
     </button>
   );
 }
-```
