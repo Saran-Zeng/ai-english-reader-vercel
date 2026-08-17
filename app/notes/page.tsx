@@ -22,6 +22,18 @@ type ArticleGroup = {
 };
 
 export default function NotesPage() {
+    function speak(text: string) {
+    if (!window.speechSynthesis) return;
+
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    utterance.lang = "en-US";
+    utterance.rate = 0.8;
+
+    window.speechSynthesis.speak(utterance);
+  }
   const [groups, setGroups] = useState<ArticleGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -681,12 +693,22 @@ export default function NotesPage() {
 
                                   <div className="word-info">
                                     <div className="word-title-row">
+                                    <div className="word-title-with-audio">
                                       <h3>
-                                        {
-                                          word.word
-                                        }
+                                        {word.word}
                                       </h3>
 
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                         e.stopPropagation();
+                                         speak(word.word);
+                                        }}
+                                        className="audio-button"
+                                      >
+                                       🔊
+                                      </button>
+                                    </div>
                                       {word.partOfSpeech && (
                                         <span className="part-of-speech">
                                           {
@@ -735,10 +757,17 @@ export default function NotesPage() {
                                         </div>
 
                                         <div className="example">
-                                          {
-                                            word.example
-                                          }
-                                        </div>
+                                         {word.example}
+
+                                        <button
+                                         type="button"
+                                         onClick={() =>
+                                           speak(word.example || "")
+                                         }
+                                        >
+                                         🗣️
+                                        </button>
+                                      </div>
                                       </div>
                                     )}
 
@@ -1082,7 +1111,37 @@ export default function NotesPage() {
           font-size: 15px;
           font-weight: 800;
         }
+        
+        .word-title-with-audio {
+         display: flex;
+         align-items: center;
+         gap: 8px;
+        }
+         
+        .audio-button {
+         width: 30px;
+         height: 30px;
+         border-radius: 50%;
+         border: none;
+         background: #eff6ff;
+         color: #2563eb;
+         font-size: 15px;
+         cursor: pointer;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         transition: all 0.2s ease;
+        }
 
+        .audio-button:hover {
+         background: #dbeafe;
+         transform: scale(1.1);
+        }
+
+        .audio-button:active {
+         transform: scale(0.95);
+        }
+         
         .part-of-speech {
           padding: 4px 7px;
           border-radius: 6px;
