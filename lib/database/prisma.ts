@@ -6,8 +6,11 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+const connectionString =
+  process.env.DATABASE_URL || process.env.DIRECT_URL;
+
 const pool = new Pool({
-  connectionString: process.env.DIRECT_URL,
+  connectionString,
 });
 
 const adapter = new PrismaPg(pool);
