@@ -8,52 +8,58 @@ export function getLevelInstruction(
 ) {
   if (level === "beginner") {
     return `
-学习等级：初级 Beginner
+Learning level: Beginner
 
-请按照英语基础学习者能够理解的方式分析。
+Analyze the article in a way that is easy for a beginner English learner to understand.
 
-重点：
-1. 使用简单、清楚的中文解释。
-2. 重点解释常见基础词汇。
-3. 重点解释简单句型。
-4. 对复杂句子进行拆分。
-5. 语法解释不要使用过多专业术语。
-6. 每个重点词汇尽量提供简单例句。
-7. 词汇数量控制在文章中最值得学习的范围。
+Focus on:
+1. Explain useful vocabulary with simple Chinese.
+2. Focus on practical and common vocabulary.
+3. Explain important basic sentence structures.
+4. Break down difficult sentences clearly.
+5. Keep grammar explanations simple.
+6. Give short examples when useful.
+7. Do not analyze every word.
 `;
   }
 
   if (level === "advanced") {
     return `
-学习等级：高级 Advanced
+Learning level: Advanced
 
-请按照高阶英语学习者的要求分析。
+Analyze the article for an advanced English learner.
 
-重点：
-1. 关注高级词汇、搭配、短语和语义差异。
-2. 深入分析复杂句型。
-3. 分析从句、非谓语、倒装、强调、虚拟语气等重要结构。
-4. 解释作者在具体语境中的表达方式。
-5. 关注自然英语表达，而不仅仅是中文翻译。
-6. 对高级词汇说明词性、语境含义和常见搭配。
-7. 重点分析真正具有学习价值的语言结构。
+Focus on:
+1. Advanced vocabulary, collocations, phrases and differences in meaning.
+2. Complex sentence structures.
+3. Important subordinate clauses, non-finite structures, inversion, emphasis and other advanced grammar.
+4. Explain why the author uses particular expressions in context.
+5. Focus on natural English usage rather than literal Chinese translation.
+6. Explain part of speech, contextual meaning and common collocations for important vocabulary.
+7. Prioritize language structures that have real learning value.
 `;
   }
 
   return `
-学习等级：中级 Intermediate
+Learning level: Intermediate
 
-请按照中级英语学习者能够理解的方式分析。
+Analyze the article for an intermediate English learner.
 
-重点：
-1. 重点解释实用词汇和常见搭配。
-2. 分析重要句型和复杂句子结构。
-3. 对关键语法进行清晰解释。
-4. 中文解释自然、易懂。
-5. 适当补充词汇的语境用法。
+Focus on:
+1. Useful vocabulary and common collocations.
+2. Important sentence structures and complex sentences.
+3. Important grammar structures.
+4. Natural and easy-to-understand Chinese explanations.
+5. Useful contextual vocabulary usage.
 `;
 }
 
+/**
+ * 长文章分批分析专用 Prompt
+ *
+ * 每次只分析文章的一小部分。
+ * 这样可以避免 3000～5000 词文章一次性产生巨大 JSON。
+ */
 export function buildArticleAnalysisPrompt(
   level: LearningLevel,
   title?: string
@@ -61,15 +67,20 @@ export function buildArticleAnalysisPrompt(
   return `
 You are an expert English teacher and English reading assistant.
 
-Analyze the user's English article for an English learner.
+Analyze ONLY the provided section of an English article.
 
 ${getLevelInstruction(level)}
 
 ${
   title
-    ? `用户提供的文章标题：${title}`
+    ? `Article title: ${title}`
     : ""
 }
+
+IMPORTANT:
+This is only ONE SECTION of a larger article.
+
+Do NOT try to analyze content that is not included in this section.
 
 Return ONLY valid JSON.
 
@@ -77,8 +88,8 @@ The JSON structure MUST be:
 
 {
   "title": "string",
-  "summary": "natural Simplified Chinese summary",
-  "translation": "natural Simplified Chinese translation",
+  "summary": "short natural Simplified Chinese summary of THIS SECTION",
+  "translation": "natural Simplified Chinese translation of THIS SECTION",
   "level": "A1 | A2 | B1 | B2 | C1 | C2",
   "sentences": [
     {
@@ -110,25 +121,28 @@ The JSON structure MUST be:
   ]
 }
 
-Rules:
+STRICT RULES:
 
 1. Return JSON only.
 2. Do not use Markdown.
 3. Do not use code fences.
-4. Preserve the original English sentences.
+4. Preserve every original English sentence in this section.
 5. Do not rewrite the original English.
-6. Translate naturally into Simplified Chinese.
-7. Do not invent information.
-8. Identify useful vocabulary rather than every word.
-9. Identify important grammar structures.
-10. Keep sentence order identical to the article.
-11. Use the selected learner level to control explanation depth.
-12. Estimate the article's actual CEFR level.
-13. The "sentences" array should cover the article's sentences.
-14. If a sentence has no important grammar, use an empty string.
-15. Vocabulary should contain useful learning words.
-16. Grammar should contain the most useful grammar structures.
-17. Keep explanations concise but useful.
+6. Keep the original sentence order.
+7. Translate the sentences naturally into Simplified Chinese.
+8. Do not invent information.
+9. Do not analyze every word.
+10. Select only useful learning vocabulary.
+11. For each sentence, normally select no more than 3 important words.
+12. For this section, normally return no more than 12 vocabulary items.
+13. For this section, normally return no more than 5 grammar points.
+14. Only explain grammar when it is useful for learning.
+15. Keep explanations concise.
+16. The "sentences" array must cover all complete sentences included in this section.
+17. If a sentence has no important grammar, use an empty string.
+18. "summary" must summarize ONLY this section.
+19. "translation" must translate ONLY this section.
+20. Do not include information from other sections.
 `;
 }
 

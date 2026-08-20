@@ -21,19 +21,22 @@ const LEVELS: {
     value: "beginner",
     label: "初级",
     english: "BEGINNER",
-    description: "适合基础学习，重点解释词汇和简单句型。",
+    description:
+      "适合基础学习，重点解释词汇和简单句型。",
   },
   {
     value: "intermediate",
     label: "中级",
     english: "INTERMEDIATE",
-    description: "适合日常阅读，深入理解词汇、句型和语法。",
+    description:
+      "适合日常阅读，深入理解词汇、句型和语法。",
   },
   {
     value: "advanced",
     label: "高级",
     english: "ADVANCED",
-    description: "深入分析高级词汇、复杂句型和语法结构。",
+    description:
+      "深入分析高级词汇、复杂句型和语法结构。",
   },
 ];
 
@@ -194,13 +197,15 @@ export default function ReaderPage() {
             <h1>
               把任何英文文章
               <br />
-              变成你的{" "}
-              <span>AI 英语课堂</span>
+              变成你的
+              <span> AI 英语课堂</span>
             </h1>
 
             <p>
-              输入一篇英文文章，AI 将自动分析重点词汇、
-              句子结构、语法和中文理解，让阅读真正变成学习。
+              输入一篇英文文章，AI
+              将自动分析重点词汇、
+              句子结构、语法和中文理解，
+              让阅读真正变成学习。
             </p>
 
             <div className="hero-points">
@@ -218,16 +223,32 @@ export default function ReaderPage() {
             </div>
           </div>
 
-          <button
-            type="button"
-            className="example-button"
-            onClick={() =>
-              setShowExample(true)
-            }
-          >
-            <span>✦</span>
-            查看示例
-          </button>
+          <div className="hero-actions">
+            <button
+              type="button"
+              className="example-button"
+              onClick={() =>
+                setShowExample(true)
+              }
+            >
+              <span>✓</span>
+              查看示例
+            </button>
+
+            {/* 新增：历史分析入口 */}
+            <button
+              type="button"
+              className="history-button"
+              onClick={() =>
+                router.push(
+                  "/analysis-history"
+                )
+              }
+            >
+              <span>↺</span>
+              查看历史分析
+            </button>
+          </div>
         </section>
 
         <form onSubmit={handleAnalyze}>
@@ -248,7 +269,8 @@ export default function ReaderPage() {
                   <h2>文章信息</h2>
 
                   <p>
-                    给文章设置一个标题，方便之后在文章库中查找。
+                    给文章设置一个标题，
+                    方便之后在文章库中查找。
                   </p>
                 </div>
               </div>
@@ -348,7 +370,7 @@ You can paste an article from a website, book, news report, or any other English
               className="example-link"
               onClick={useExample}
             >
-              <span>✦</span>
+              <span>✓</span>
               使用示例文章快速体验
               <span className="link-arrow">
                 →
@@ -449,7 +471,7 @@ You can paste an article from a website, book, news report, or any other English
           <section className="analyze-section">
             <div className="analyze-info">
               <div className="analyze-icon">
-                ✦
+                ✓
               </div>
 
               <div>
@@ -728,15 +750,35 @@ You can paste an article from a website, book, news report, or any other English
           font-size: 13px;
         }
 
-        .example-button {
+        .hero-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-shrink: 0;
+        }
+
+        .example-button,
+        .history-button {
           display: inline-flex;
           align-items: center;
+          justify-content: center;
           gap: 8px;
           flex-shrink: 0;
           height: 46px;
           padding: 0 17px;
-          border: 1px solid #e1e4ec;
           border-radius: 13px;
+          font-size: 12px;
+          font-weight: 800;
+          cursor: pointer;
+          transition:
+            transform 0.18s ease,
+            box-shadow 0.18s ease,
+            border-color 0.18s ease,
+            background 0.18s ease;
+        }
+
+        .example-button {
+          border: 1px solid #e1e4ec;
           background: rgba(
             255,
             255,
@@ -747,13 +789,6 @@ You can paste an article from a website, book, news report, or any other English
           box-shadow:
             0 5px 18px
             rgba(25, 30, 50, 0.04);
-          font-size: 12px;
-          font-weight: 800;
-          cursor: pointer;
-          transition:
-            transform 0.18s ease,
-            box-shadow 0.18s ease,
-            border-color 0.18s ease;
         }
 
         .example-button:hover {
@@ -766,6 +801,29 @@ You can paste an article from a website, book, news report, or any other English
 
         .example-button span {
           color: #6366f1;
+        }
+
+        .history-button {
+          border: 1px solid #dcdff0;
+          background: #f7f7ff;
+          color: #5750d8;
+          box-shadow:
+            0 5px 18px
+            rgba(25, 30, 50, 0.04);
+        }
+
+        .history-button:hover {
+          transform: translateY(-2px);
+          border-color: #c8c8ea;
+          background: #f1f1ff;
+          box-shadow:
+            0 10px 25px
+            rgba(25, 30, 50, 0.08);
+        }
+
+        .history-button span {
+          font-size: 17px;
+          line-height: 1;
         }
 
         .reader-card {
@@ -1468,9 +1526,14 @@ You can paste an article from a website, book, news report, or any other English
             font-size: 40px;
           }
 
-          .example-button {
+          .hero-actions {
             width: 100%;
-            justify-content: center;
+            flex-direction: column;
+          }
+
+          .example-button,
+          .history-button {
+            width: 100%;
           }
 
           .reader-card {

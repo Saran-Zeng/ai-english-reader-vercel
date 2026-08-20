@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
-import { analyzeEnglishArticle } from "@/lib/ai/deepseek";
-import { prisma } from "@/lib/database/prisma";
+import {
+  analyzeLongArticle,
+} from "@/lib/ai/deepseek";
+import {
+  prisma,
+} from "@/lib/database/prisma";
+
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   try {
@@ -35,7 +41,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: "文章内容太短，请至少输入 10 个字符。",
+          error:
+            "文章内容太短，请至少输入 10 个字符。",
         },
         { status: 400 }
       );
@@ -47,174 +54,218 @@ export async function POST(request: Request) {
       "advanced",
     ];
 
-    const selectedLevel = validLevels.includes(level)
-      ? level
-      : "intermediate";
+    const selectedLevel =
+      validLevels.includes(level)
+        ? level
+        : "intermediate";
 
-    const analysis = await analyzeEnglishArticle(
-      content,
-      selectedLevel,
-      title
+    console.log(
+      "Starting long article analysis..."
     );
 
-    const article = await prisma.article.create({
-      data: {
-        title:
-          title ||
-          analysis.title ||
-          "Untitled Article",
+    console.log(
+      `Article characters: ${content.length}`
+    );
 
+    const analysis =
+      await analyzeLongArticle(
         content,
+        selectedLevel as
+          | "beginner"
+          | "intermediate"
+          | "advanced",
+        title
+      );
 
-        translation:
-          analysis.translation || null,
+    console.log(
+      "Long article analysis completed."
+    );
 
-        summary:
-          analysis.summary || null,
+    const article =
+      await prisma.article.create({
+        data: {
+          title:
+            title ||
+            analysis.title ||
+            "Untitled Article",
 
-        level:
-          analysis.level || selectedLevel,
+          content,
 
-        sentences: {
-          create: Array.isArray(analysis.sentences)
-            ? analysis.sentences
-                .filter(
-                  (sentence: {
-                    english?: string;
-                  }) =>
-                    sentence?.english
-                )
-                .map(
-                  (
-                    sentence: {
-                      english?: string;
-                      translation?: string;
-                      grammar?: string;
-                      words?: {
+          translation:
+            analysis.translation ||
+            null,
+
+          summary:
+            analysis.summary ||
+            null,
+
+          level:
+            analysis.level ||
+            selectedLevel,
+
+          sentences: {
+            create:
+              Array.isArray(
+                analysis.sentences
+              )
+                ? analysis.sentences
+                    .filter(
+                      (sentence: {
+                        english?: string;
+                      }) =>
+                        sentence?.english
+                    )
+                    .map(
+                      (
+                        sentence: {
+                          english?: string;
+                          translation?: string;
+                          grammar?: string;
+                          words?: {
+                            word?: string;
+                            meaning?: string;
+                          }[];
+                        },
+                        index: number
+                      ) => ({
+                        english:
+                          sentence.english ||
+                          "",
+
+                        translation:
+                          sentence.translation ||
+                          null,
+
+                        grammar:
+                          sentence.grammar ||
+                          null,
+
+                        order: index,
+
+                        words: {
+                          create:
+                            Array.isArray(
+                              sentence.words
+                            )
+                              ? sentence.words
+                                  .filter(
+                                    (
+                                      word: {
+                                        word?: string;
+                                      }
+                                    ) =>
+                                      word?.word
+                                  )
+                                  .map(
+                                    (
+                                      word: {
+                                        word?: string;
+                                        meaning?: string;
+                                      }
+                                    ) => ({
+                                      word:
+                                        word.word ||
+                                        "",
+
+                                      meaning:
+                                        word.meaning ||
+                                        null,
+                                    })
+                                  )
+                              : [],
+                        },
+                      })
+                    )
+                : [],
+          },
+
+          vocabulary: {
+            create:
+              Array.isArray(
+                analysis.vocabulary
+              )
+                ? analysis.vocabulary
+                    .filter(
+                      (item: {
+                        word?: string;
+                      }) =>
+                        item?.word
+                    )
+                    .map(
+                      (item: {
                         word?: string;
                         meaning?: string;
-                      }[];
-                    },
-                    index: number
-                  ) => ({
-                    english:
-                      sentence.english || "",
+                        partOfSpeech?: string;
+                        example?: string;
+                      }) => ({
+                        word:
+                          item.word || "",
 
-                    translation:
-                      sentence.translation ||
-                      null,
+                        meaning:
+                          item.meaning || "",
 
-                    grammar:
-                      sentence.grammar || null,
+                        partOfSpeech:
+                          item.partOfSpeech ||
+                          null,
 
-                    order: index,
-
-                    words: {
-                      create:
-                        Array.isArray(
-                          sentence.words
-                        )
-                          ? sentence.words
-                              .filter(
-                                (
-                                  word: {
-                                    word?: string;
-                                  }
-                                ) => word?.word
-                              )
-                              .map(
-                                (
-                                  word: {
-                                    word?: string;
-                                    meaning?: string;
-                                  }
-                                ) => ({
-                                  word:
-                                    word.word || "",
-                                  meaning:
-                                    word.meaning ||
-                                    null,
-                                })
-                              )
-                          : [],
-                    },
-                  })
-                )
-            : [],
-        },
-
-        vocabulary: {
-          create: Array.isArray(
-            analysis.vocabulary
-          )
-            ? analysis.vocabulary
-                .filter(
-                  (item: {
-                    word?: string;
-                  }) => item?.word
-                )
-                .map(
-                  (item: {
-                    word?: string;
-                    meaning?: string;
-                    partOfSpeech?: string;
-                    example?: string;
-                  }) => ({
-                    word: item.word || "",
-                    meaning:
-                      item.meaning || "",
-                    partOfSpeech:
-                      item.partOfSpeech ||
-                      null,
-                    example:
-                      item.example || null,
-                  })
-                )
-            : [],
-        },
-
-        grammar: {
-          create: Array.isArray(
-            analysis.grammar
-          )
-            ? analysis.grammar
-                .filter(
-                  (item: {
-                    title?: string;
-                  }) => item?.title
-                )
-                .map(
-                  (item: {
-                    title?: string;
-                    explanation?: string;
-                    example?: string;
-                  }) => ({
-                    title:
-                      item.title || "",
-                    explanation:
-                      item.explanation ||
-                      "",
-                    example:
-                      item.example || null,
-                  })
-                )
-            : [],
-        },
-      },
-
-      include: {
-        sentences: {
-          orderBy: {
-            order: "asc",
+                        example:
+                          item.example ||
+                          null,
+                      })
+                    )
+                : [],
           },
-          include: {
-            words: true,
+
+          grammar: {
+            create:
+              Array.isArray(
+                analysis.grammar
+              )
+                ? analysis.grammar
+                    .filter(
+                      (item: {
+                        title?: string;
+                      }) =>
+                        item?.title
+                    )
+                    .map(
+                      (item: {
+                        title?: string;
+                        explanation?: string;
+                        example?: string;
+                      }) => ({
+                        title:
+                          item.title || "",
+
+                        explanation:
+                          item.explanation ||
+                          "",
+
+                        example:
+                          item.example ||
+                          null,
+                      })
+                    )
+                : [],
           },
         },
-        vocabulary: true,
-        grammar: true,
-      },
-    });
+
+        include: {
+          sentences: {
+            orderBy: {
+              order: "asc",
+            },
+
+            include: {
+              words: true,
+            },
+          },
+
+          vocabulary: true,
+
+          grammar: true,
+        },
+      });
 
     return NextResponse.json({
       success: true,
@@ -229,6 +280,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
+
         error:
           error instanceof Error
             ? error.message
