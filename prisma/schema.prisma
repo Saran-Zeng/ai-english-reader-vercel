@@ -1,80 +1,79 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-1.1.x"]
 }
 
 datasource db {
   provider = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  url      = env("DATABASE_URL")
 }
 
 model Article {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   title       String
   content     String
   translation String?
   summary     String?
   level       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  sentences  Sentence[]
-  vocabulary Vocabulary[]
-  grammar    Grammar[]
-  notes      Note[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  grammar     Grammar[]
+  notes       Note[]
+  sentences   Sentence[]
+  vocabulary  Vocabulary[]
 }
 
 model Sentence {
-  id            String   @id @default(cuid())
-  articleId     String
-  english       String
-  translation   String?
-  grammar       String?
-  order         Int
-
-  article       Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  words         SentenceWord[]
+  id          String         @id @default(cuid())
+  articleId   String
+  english     String
+  translation String?
+  grammar     String?
+  order       Int
+  article     Article        @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  words       SentenceWord[]
 }
 
 model Vocabulary {
-  id            String   @id @default(cuid())
-  articleId     String
-  word          String
-  meaning       String
-  partOfSpeech  String?
-  example       String?
-  saved         Boolean  @default(false)
-
-  article       Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  id           String  @id @default(cuid())
+  articleId    String
+  word         String
+  meaning      String
+  partOfSpeech String?
+  example      String?
+  saved        Boolean @default(false)
+  article      Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
 }
 
 model SentenceWord {
-  id          String   @id @default(cuid())
-  sentenceId  String
-  word        String
-  meaning     String?
-
-  sentence    Sentence @relation(fields: [sentenceId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  sentenceId String
+  word       String
+  meaning    String?
+  sentence   Sentence @relation(fields: [sentenceId], references: [id], onDelete: Cascade)
 }
 
 model Grammar {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   articleId   String
   title       String
   explanation String
   example     String?
-
-  article     Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  article     Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
 }
 
 model Note {
-  id          String   @id @default(cuid())
-  articleId   String?
-  title       String
-  content     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  articleId String?
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  article   Article? @relation(fields: [articleId], references: [id])
+}
 
-  article     Article? @relation(fields: [articleId], references: [id], onDelete: SetNull)
+model playing_with_neon {
+  id    Int    @id @default(autoincrement())
+  name  String
+  value Float? @db.Real
 }
