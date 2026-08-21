@@ -860,34 +860,129 @@ function ReadingInterface({
     article.title,
   ]);
 
-  function handleAudioImport(
-    event: ChangeEvent<HTMLInputElement>,
-  ) {
-    const file =
-      event.target.files?.[0];
+  async function handleAudioImport(
+  event: ChangeEvent<HTMLInputElement>,
+) {
+  const file =
+    event.target.files?.[0];
 
-    if (!file) return;
+  if (!file) {
+    return;
+  }
 
-    if (!file.type.startsWith("audio/")) {
-      alert(
-        "请选择 MP3、WAV、M4A、OGG 等音频文件。",
+  if (!file.type.startsWith("audio/")) {
+    alert(
+      "请选择 MP3、WAV、M4A、OGG 等音频文件。"
+    );
+
+    event.target.value = "";
+    return;
+  }
+
+  try {
+    setAudioLoading(true);
+
+    setLocalAudioName(file.name);
+
+    const formData = new FormData();
+
+    formData.append("file", file);
+    formData.append("articleId", article.id);
+
+    const response = await fetch(
+      "/api/audio-upload",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const data =
+      await response.json();
+
+    if (!response.ok || !data?.success) {
+      throw new Error(
+        data?.error ||
+          "音频上传失败"
       );
-
-      return;
     }
 
+    /*
+     * 上传成功以后，Vercel Blob
+     * 返回一个真正可以长期访问的 URL。
+     */
+    const savedAudioUrl =
+      typeof data.audioUrl ===
+      "string"
+        ? data.audioUrl
+        : "";
+
+    if (!savedAudioUrl) {
+      throw new Error(
+        "服务器没有返回音频地址"
+      );
+    }
+
+    /*
+     * 不再使用 URL.createObjectURL。
+     *
+     * 直接使用 Vercel Blob URL，
+     * 这样刷新页面以后仍然存在。
+     */
     if (localAudioUrl) {
       URL.revokeObjectURL(
-        localAudioUrl,
+        localAudioUrl
       );
     }
 
-    const url =
-      URL.createObjectURL(file);
+    setLocalAudioUrl(
+      savedAudioUrl
+    );
 
-    setLocalAudioUrl(url);
-    setLocalAudioName(file.name);
+    setLocalAudioName(
+      typeof data.fileName ===
+        "string"
+        ? data.fileName
+        : file.name
+    );
+
+    /*
+     * 同步更新当前页面里的 audio 状态，
+     * 这样上传成功后马上就可以播放。
+     */
+    setAudio({
+      found: true,
+      audioUrl: savedAudioUrl,
+      fileName:
+        typeof data.fileName ===
+        "string"
+        ? data.fileName
+        : file.name,
+    });
+
+    alert(
+      "音频上传成功，已经永久保存。"
+    );
+  } catch (error) {
+    console.error(
+      "Audio import error:",
+      error
+    );
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "音频上传失败，请稍后重试。"
+    );
+  } finally {
+    setAudioLoading(false);
+
+    /*
+     * 允许再次选择同一个文件。
+     */
+    event.target.value = "";
   }
+}
 
   function stopSpeaking() {
     if (
