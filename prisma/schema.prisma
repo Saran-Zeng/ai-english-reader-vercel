@@ -33,6 +33,9 @@ model Sentence {
   order       Int
   article     Article        @relation(fields: [articleId], references: [id], onDelete: Cascade)
   words       SentenceWord[]
+
+  @@index([articleId])
+  @@index([articleId, order])
 }
 
 model Vocabulary {
@@ -44,6 +47,10 @@ model Vocabulary {
   example      String?
   saved        Boolean @default(false)
   article      Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
+  @@index([saved])
+  @@index([articleId, saved])
 }
 
 model SentenceWord {
@@ -52,15 +59,19 @@ model SentenceWord {
   word       String
   meaning    String?
   sentence   Sentence @relation(fields: [sentenceId], references: [id], onDelete: Cascade)
+
+  @@index([sentenceId])
 }
 
 model Grammar {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   articleId   String
   title       String
   explanation String
   example     String?
-  article     Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  article     Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
 }
 
 model Note {
@@ -71,6 +82,8 @@ model Note {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   article   Article? @relation(fields: [articleId], references: [id])
+
+  @@index([articleId])
 }
 
 model playing_with_neon {

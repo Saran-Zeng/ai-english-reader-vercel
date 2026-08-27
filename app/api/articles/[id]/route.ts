@@ -23,7 +23,8 @@ export async function GET(
         { status: 400 }
       );
     }
-
+    
+    const dbStart = Date.now();
     const article = await prisma.article.findUnique({
       where: {
         id,
@@ -41,6 +42,9 @@ export async function GET(
         grammar: true,
       },
     });
+    console.log(
+     `[API /articles/${id}] DB query: ${Date.now() - dbStart}ms`
+    );
 
     if (!article) {
       return NextResponse.json(

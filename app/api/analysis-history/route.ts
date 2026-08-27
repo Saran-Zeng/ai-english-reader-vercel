@@ -8,6 +8,7 @@ export async function GET(request: Request) {
     const search =
       searchParams.get("search")?.trim() || "";
 
+    const dbStart = Date.now();
     const articles = await prisma.article.findMany({
       where: search
         ? {
@@ -15,11 +16,13 @@ export async function GET(request: Request) {
               {
                 title: {
                   contains: search,
+                  mode: "insensitive",
                 },
               },
               {
                 content: {
                   contains: search,
+                  mode: "insensitive",
                 },
               },
             ],
@@ -30,21 +33,30 @@ export async function GET(request: Request) {
         createdAt: "desc",
       },
 
-      include: {
-        sentences: {
-          orderBy: {
-            order: "asc",
-          },
-          include: {
-            words: true,
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        summary: true,
+        translation: true,
+        level: true,
+        createdAt: true,
+
+        _count: {
+          select: {
+            sentences: true,
+            vocabulary: true,
+            grammar: true,
           },
         },
-
-        vocabulary: true,
-
-        grammar: true,
       },
     });
+   
+    console.log(
+         `[API /analysis-history] DB query: ${
+            Date.now() - dbStart
+         }ms`
+       );
 
     return NextResponse.json({
       success: true,
@@ -96,6 +108,9 @@ export async function DELETE(request: Request) {
       await prisma.article.findUnique({
         where: {
           id,
+        },
+        select: {
+          id: true,
         },
       });
 
