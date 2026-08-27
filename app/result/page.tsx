@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import InteractiveArticle from "@/components/InteractiveArticle";
 
 type Word = {
   id?: string;
@@ -24,6 +25,7 @@ type Vocabulary = {
   meaning: string;
   partOfSpeech?: string | null;
   example?: string | null;
+  saved?: boolean;
 };
 
 type Grammar = {
@@ -61,6 +63,12 @@ export default function ResultPage() {
 
   const [showTranslation, setShowTranslation] =
     useState(false);
+
+  const [showOriginal, setShowOriginal] =
+    useState(true);
+
+  const [showFullArticle, setShowFullArticle] =
+    useState(false);  
 
   const [expandedVocabulary, setExpandedVocabulary] =
     useState<string | null>(null);
@@ -421,9 +429,6 @@ export default function ResultPage() {
 
               <span>·</span>
 
-              <span>
-                {vocabulary.length} 个重点词汇
-              </span>
             </div>
           </div>
 
@@ -474,7 +479,7 @@ export default function ResultPage() {
                 <h2>📖 原文</h2>
 
                 <p>
-                  完整阅读原始英文文章
+                  每个英文单词都可以点击，不认识的直接加入生词本
                 </p>
               </div>
             </div>
@@ -509,14 +514,34 @@ export default function ResultPage() {
           </div>
 
           <div className="article-full-text">
-            <div className="article-full-label">
-              ORIGINAL ARTICLE
-            </div>
-
-            <div className="article-full-content">
-              {article.content}
-            </div>
+           <div className="article-full-label">
+             ORIGINAL ARTICLE
           </div>
+
+          <div className="article-full-toggle-row">
+           <button
+             className="article-full-toggle"
+             onClick={() =>
+              setShowFullArticle(!showFullArticle)
+             }
+           >
+             {showFullArticle
+               ? "↑ 收起原文"
+               : "↓ 展开全文"}
+           </button>
+         </div>
+
+         {showFullArticle && (
+           <div className="article-full-content">
+            <InteractiveArticle
+              articleId={article.id}
+              content={article.content}
+              vocabulary={vocabulary}
+           />
+         </div>
+        )}
+      </div>
+
 
           {showTranslation && (
             <div className="inline-translation">
@@ -694,128 +719,6 @@ export default function ResultPage() {
               </span>
 
               <div>
-                <h2>📚 重点词汇</h2>
-
-                <p>
-                  点击单词查看详细解释，并可加入生词本
-                </p>
-              </div>
-            </div>
-
-            <span className="count-badge">
-              {vocabulary.length}
-            </span>
-          </div>
-
-          {vocabulary.length > 0 ? (
-            <div className="vocabulary-list">
-              {vocabulary.map((item) => {
-                const expanded =
-                  expandedVocabulary ===
-                  item.id;
-
-                const added =
-                  addedWords.includes(item.word);
-
-                const adding =
-                  addingWord === item.word;
-
-                return (
-                  <div
-                    key={item.id}
-                    className="vocabulary-item"
-                  >
-                    <button
-                      className="vocabulary-main"
-                      onClick={() =>
-                        setExpandedVocabulary(
-                          expanded
-                            ? null
-                            : item.id
-                        )
-                      }
-                    >
-                      <div className="vocabulary-word">
-                        <strong>
-                          {item.word}
-                        </strong>
-
-                        {item.partOfSpeech && (
-                          <span className="part-of-speech">
-                            {item.partOfSpeech}
-                          </span>
-                        )}
-                      </div>
-
-                      <span className="vocabulary-arrow">
-                        {expanded ? "⌃" : "+"}
-                      </span>
-                    </button>
-
-                    {expanded && (
-                      <div className="vocabulary-detail">
-                        {item.meaning && (
-                          <div>
-                            <strong>
-                              中文释义
-                            </strong>
-
-                            <p>
-                              {item.meaning}
-                            </p>
-                          </div>
-                        )}
-
-                        {item.example && (
-                          <div>
-                            <strong>
-                              例句
-                            </strong>
-
-                            <p className="example-text">
-                              {item.example}
-                            </p>
-                          </div>
-                        )}
-
-                        <button
-                          className={`add-word-button ${
-                            added ? "added" : ""
-                          }`}
-                          disabled={
-                            added || adding
-                          }
-                          onClick={(event) => {
-                            event.stopPropagation();
-
-                            addWordToNotes(item);
-                          }}
-                        >
-                          {adding
-                            ? "正在加入..."
-                            : added
-                              ? "✓ 已加入生词本"
-                              : "＋ 加入生词本"}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <EmptyState text="暂无重点词汇。" />
-          )}
-        </section>
-
-        <section className="result-card">
-          <div className="card-header">
-            <div>
-              <span className="card-number">
-                04
-              </span>
-
-              <div>
                 <h2>📘 语法分析</h2>
 
                 <p>
@@ -937,11 +840,6 @@ export default function ResultPage() {
 
               <div>
                 <span>03</span>
-                把重点词汇加入生词本
-              </div>
-
-              <div>
-                <span>04</span>
                 最后听一遍全文朗读
               </div>
             </div>
@@ -1096,6 +994,31 @@ export default function ResultPage() {
           align-items: center;
           gap: 13px;
         }
+        
+        .article-full-toggle-row {
+         display: flex;
+         justify-content: center;
+         margin: 12px 0 16px;
+        }
+
+        .article-full-toggle {
+         border: none;
+         background: transparent;
+         color: #64748b;
+         font-size: 14px;
+         font-weight: 600;
+         cursor: pointer;
+         padding: 6px 14px;
+         border-radius: 8px;
+         transition:
+           background-color 0.2s ease,
+           color 0.2s ease;
+        }
+
+        .article-full-toggle:hover {
+          background: #f1f5f9;
+          color: #334155;
+        }
 
         .card-number {
           display: flex;
@@ -1138,7 +1061,6 @@ export default function ResultPage() {
         }
 
         .article-full-content {
-          white-space: pre-line;
           color: #292d38;
           font-size: 15px;
           line-height: 1.9;

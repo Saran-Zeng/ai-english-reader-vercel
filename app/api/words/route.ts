@@ -87,6 +87,18 @@ export async function GET() {
  * POST
  *
  * 将单词加入生词本。
+ *
+ * 支持三种情况：
+ *
+ * 1. vocabularyId
+ *    已经存在 Vocabulary，只需要 saved=true
+ *
+ * 2. articleId + word
+ *    当前文章中已经存在这个词，只需要 saved=true
+ *
+ * 3. articleId + word + meaning...
+ *    当前文章中完全没有这个词。
+ *    自动创建新的 Vocabulary，并加入生词本。
  */
 export async function POST(request: Request) {
   try {
@@ -107,9 +119,29 @@ export async function POST(request: Request) {
         ? body.word.trim()
         : "";
 
+    const meaning =
+      typeof body?.meaning === "string"
+        ? body.meaning.trim()
+        : "";
+
+    const partOfSpeech =
+      typeof body?.partOfSpeech === "string"
+        ? body.partOfSpeech.trim()
+        : "";
+
+    const example =
+      typeof body?.example === "string"
+        ? body.example.trim()
+        : "";
+
     /**
+     * --------------------------------------------------
      * 方案 1：
-     * 直接使用 vocabularyId。
+     * 已经存在 vocabularyId。
+     *
+     * 这是原来的功能：
+     * 从 AI 重点词汇区域加入生词本。
+     * --------------------------------------------------
      */
     if (vocabularyId) {
       const vocabulary =
@@ -156,8 +188,11 @@ export async function POST(request: Request) {
     }
 
     /**
-     * 方案 2：
-     * 使用 articleId + word。
+     * --------------------------------------------------
+     * 下面是新的“全文点击单词”功能。
+     *
+     * 必须有 articleId。
+     * --------------------------------------------------
      */
     if (!articleId) {
       return NextResponse.json(
@@ -179,38 +214,163 @@ export async function POST(request: Request) {
       );
     }
 
-    const vocabulary =
-      await prisma.vocabulary.findFirst({
+    /**
+     * --------------------------------------------------
+     * 确认文章存在
+     * --------------------------------------------------
+     */
+    const article =
+      await prisma.article.findUnique({
         where: {
-          articleId,
-          word,
+          id: articleId,
+        },
+        select: {
+          id: true,
+          title: true,
+          level: true,
+          createdAt: true,
         },
       });
 
-    if (!vocabulary) {
+    if (!article) {
       return NextResponse.json(
         {
           success: false,
-          error: `在当前文章中找不到生词「${word}」。`,
+          error: "当前文章不存在。",
         },
         { status: 404 }
       );
     }
 
-    if (vocabulary.saved) {
+    /**
+     * --------------------------------------------------
+     * 查找当前文章中是否已经存在这个单词。
+     *
+     * 注意：
+     * 不要求这个词一定是 AI 原来挑出来的重点词。
+     *
+     * 如果 AI 原来已经创建过 Vocabulary，
+     * 我们直接复用。
+     * --------------------------------------------------
+     */
+    const vocabulary =
+      await prisma.vocabulary.findFirst({
+        where: {
+          articleId,
+          word: {
+            equals: word,
+            mode: "insensitive",
+          },
+        },
+      });
+
+    /**
+     * --------------------------------------------------
+     * 情况 A：
+     * 当前文章中已经存在这个词。
+     * --------------------------------------------------
+     */
+    if (vocabulary) {
+      /**
+       * 已经加入过生词本。
+       */
+      if (vocabulary.saved) {
+        return NextResponse.json({
+          success: true,
+          alreadySaved: true,
+          word: vocabulary,
+        });
+      }
+
+      /**
+       * 存在，但还没有加入生词本。
+       *
+       * 设置 saved=true。
+       *
+       * 如果这次点击 AI 查询到了更完整的信息，
+       * 同时补充 meaning / partOfSpeech / example。
+       */
+      const savedWord =
+        await prisma.vocabulary.update({
+          where: {
+            id: vocabulary.id,
+          },
+          data: {
+            saved: true,
+
+            ...(meaning
+              ? {
+                  meaning,
+                }
+              : {}),
+
+            ...(partOfSpeech
+              ? {
+                  partOfSpeech,
+                }
+              : {}),
+
+            ...(example
+              ? {
+                  example,
+                }
+              : {}),
+          },
+          include: {
+            article: {
+              select: {
+                id: true,
+                title: true,
+                level: true,
+                createdAt: true,
+              },
+            },
+          },
+        });
+
+      console.log(
+        `Vocabulary saved: ${savedWord.word} / article: ${savedWord.article.title}`
+      );
+
       return NextResponse.json({
         success: true,
-        alreadySaved: true,
-        word: vocabulary,
+        word: savedWord,
       });
     }
 
-    const savedWord =
-      await prisma.vocabulary.update({
-        where: {
-          id: vocabulary.id,
-        },
+    /**
+     * --------------------------------------------------
+     * 情况 B：
+     *
+     * 数据库中完全没有这个词。
+     *
+     * 这就是这次新增的核心功能：
+     *
+     * 用户在文章里点击一个 AI 原本没有分析过的词
+     * ↓
+     * AI 返回释义
+     * ↓
+     * 用户点击“加入生词本”
+     * ↓
+     * 这里直接创建 Vocabulary
+     * --------------------------------------------------
+     */
+    const newWord =
+      await prisma.vocabulary.create({
         data: {
+          articleId,
+
+          word,
+
+          meaning:
+            meaning || "暂无释义",
+
+          partOfSpeech:
+            partOfSpeech || null,
+
+          example:
+            example || null,
+
           saved: true,
         },
         include: {
@@ -226,12 +386,13 @@ export async function POST(request: Request) {
       });
 
     console.log(
-      `Vocabulary saved: ${savedWord.word} / article: ${savedWord.article.title}`
+      `New vocabulary saved: ${newWord.word} / article: ${newWord.article.title}`
     );
 
     return NextResponse.json({
       success: true,
-      word: savedWord,
+      created: true,
+      word: newWord,
     });
   } catch (error) {
     console.error("Save word error:", error);
@@ -252,18 +413,28 @@ export async function POST(request: Request) {
 /**
  * DELETE
  *
- * 支持两种删除：
+ * 支持三种删除方式：
  *
  * 1. vocabularyId
  *    删除单个生词
  *
  * 2. articleId
- *    删除整个文章对应的生词本
+ *    删除整篇文章对应的生词本
+ *
+ * 3. articleId + word
+ *    删除指定文章中的指定单词
  *
  * 注意：
- * 删除整个生词本并不会删除文章。
- * 只是把这篇文章下所有 vocabulary 的 saved
- * 从 true 改成 false。
+ * 这里不会真的删除 Vocabulary。
+ *
+ * 只是：
+ *
+ * saved: true
+ *      ↓
+ * saved: false
+ *
+ * 所以以后重新点击这个词，
+ * 仍然可以再次加入生词本。
  */
 export async function DELETE(request: Request) {
   try {
@@ -286,10 +457,21 @@ export async function DELETE(request: Request) {
 
     /**
      * --------------------------------------------------
-     * 方案 1：删除整个文章对应的生词本
+     * 方案 1：
+     *
+     * 删除整篇文章对应的生词本。
+     *
+     * 不删除文章。
+     * 不删除 Vocabulary。
+     *
+     * 只把 saved 改成 false。
      * --------------------------------------------------
      */
-    if (articleId && !vocabularyId && !word) {
+    if (
+      articleId &&
+      !vocabularyId &&
+      !word
+    ) {
       const result =
         await prisma.vocabulary.updateMany({
           where: {
@@ -310,7 +492,9 @@ export async function DELETE(request: Request) {
 
     /**
      * --------------------------------------------------
-     * 方案 2：删除单个生词
+     * 方案 2：
+     *
+     * 删除单个生词。
      * --------------------------------------------------
      */
     if (vocabularyId) {
@@ -332,7 +516,11 @@ export async function DELETE(request: Request) {
 
     /**
      * --------------------------------------------------
-     * 方案 3：articleId + word
+     * 方案 3：
+     *
+     * articleId + word
+     *
+     * 删除指定文章中的指定单词。
      * --------------------------------------------------
      */
     if (!articleId || !word) {
@@ -349,7 +537,10 @@ export async function DELETE(request: Request) {
       await prisma.vocabulary.findFirst({
         where: {
           articleId,
-          word,
+          word: {
+            equals: word,
+            mode: "insensitive",
+          },
         },
       });
 
