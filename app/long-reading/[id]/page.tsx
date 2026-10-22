@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import InteractiveArticle from "@/components/InteractiveArticle";
 import {
   useEffect,
   useMemo,
@@ -1422,22 +1423,18 @@ function ReadingInterface({
 
                   <div className="text-lg font-medium leading-9 text-slate-800 md:text-xl">
 
-                    {paragraphs.map(
-                      (
-                        paragraph,
-                        index,
-                      ) => (
-                        <p
-                          key={
-                            paragraph.id ||
-                            `full-paragraph-${index}`
-                          }
-                          className="mb-8 last:mb-0"
-                        >
-                          {paragraph.english}
-                        </p>
-                      ),
-                    )}
+                    {paragraphs.map((paragraph, index) => (
+                      <div
+                        key={paragraph.id || `full-paragraph-${index}`}
+                        className="mb-8 last:mb-0"
+                      >
+                        <InteractiveArticle
+                          articleId={article.id}
+                          content={paragraph.english}
+                          vocabulary={[]}
+                        />
+                      </div>
+                    ))}
 
                   </div>
 
@@ -1682,9 +1679,13 @@ function ReadingInterface({
 
                       {/* 英文段落 */}
 
-                      <p className="text-lg font-semibold leading-9 text-slate-900 md:text-xl">
-                        {paragraph.english}
-                      </p>
+                      <div className="text-lg font-semibold leading-9 text-slate-900 md:text-xl">
+                        <InteractiveArticle
+                          articleId={article.id}
+                          content={paragraph.english}
+                          vocabulary={[]}
+                        />
+                      </div>
 
                       {/* 中文 */}
 

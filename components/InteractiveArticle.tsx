@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -994,31 +994,35 @@ export default function InteractiveArticle({
          * 都可以单独点击。
          */
         .article-word {
-          display: inline;
-          padding: 1px 1px;
-          margin: 0;
-          border: 0;
-          border-radius: 4px;
-          background: transparent;
-          color: inherit;
-          font: inherit;
-          line-height: inherit;
+          display: inline !important;
+          appearance: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          border: none !important;
+          border-radius: 0 !important;
+          outline: none;
+          box-shadow: none !important;
+          background: transparent !important;
+          color: inherit !important;
+          font: inherit !important;
+          line-height: inherit !important;
+          vertical-align: baseline;
           cursor: pointer;
-          transition:
-            background 0.15s ease,
-            color 0.15s ease;
+          transition: color 0.15s ease;
         }
 
         .article-word:hover {
-          background: #eef0ff;
-          color: #4f46e5;
+          color: #4f46e5 !important;
+          text-decoration: underline;
+          text-underline-offset: 3px;
         }
 
         .article-word-active {
-          background: #e8eaff;
-          color: #4f46e5;
-          box-shadow:
-            0 0 0 2px #e8eaff;
+          color: #4f46e5 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          text-decoration: underline;
+          text-underline-offset: 3px;
         }
 
         /*
