@@ -1018,11 +1018,11 @@ export default function InteractiveArticle({
         }
 
         .article-word-active {
-          color: #4f46e5 !important;
+          color: inherit !important;
           background: transparent !important;
           box-shadow: none !important;
-          text-decoration: underline;
-          text-underline-offset: 3px;
+          outline: none !important;
+          text-decoration: none !important;
         }
 
         /*
@@ -1269,3 +1269,4 @@ export default function InteractiveArticle({
     </div>
   );
 }
+
